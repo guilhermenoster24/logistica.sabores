@@ -1,109 +1,68 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('loginForm');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
 
-    const tableBody = document.getElementById('tableBody');
+    loginForm.addEventListener('submit', function(event) {
+        event.preventDefault();
 
+        const username = usernameInput.value;
+        const password = passwordInput.value;
 
+        // Credenciais do Administrador (usuário padrão 'admin', senha padrão 'admin123')
+        const adminUser = 'admin';
+        const adminPass = 'admin123'; 
 
-    loadRelatorios();
+        // Tentar login como Administrador
+        if (username === adminUser && password === adminPass) {
+            localStorage.setItem('loggedInUserType', 'admin');
+            alert('Login de Administrador bem-sucedido!');
+            window.location.href = 'cadastroMotorista.html'; // Redireciona para uma página de administrador
+            return;
+        }
 
+        // Tentar login como Motorista (usando o CPF como "usuário" e o RG como "senha")
+        // Lembre-se que RG e CPF podem ter máscaras no formulário, então remova-as para comparação.
+        const motoristas = JSON.parse(localStorage.getItem('motoristas')) || [];
+        const motoristaLogado = motoristas.find(motorista =>
+            motorista.cpf.replace(/\D/g, '') === username.replace(/\D/g, '') &&
+            motorista.rg.replace(/\D/g, '') === password.replace(/\D/g, '')
+        );
 
+        if (motoristaLogado) {
+            localStorage.setItem('loggedInUserType', 'motorista');
+            localStorage.setItem('loggedInMotoristaId', motoristaLogado.id);
+            alert(`Login de Motorista bem-sucedido! Bem-vindo, ${motoristaLogado.nome}.`);
+            window.location.href = 'minhasViagens.html'; // Redireciona para a nova página do motorista
+        } else {
+            alert('Usuário ou senha inválidos.');
+        }
+    });
 
-    function loadRelatorios() {
+    // No modo escuro, o ícone de luz é inicializado
+    const themeToggle = document.getElementById('themeToggle');
+    const modeIcon = document.getElementById('mode_icon');
 
-        const relatorios = JSON.parse(localStorage.getItem('relatorios')) || [];
+    const isDarkMode = localStorage.getItem('darkMode') === 'enabled';
+    if (isDarkMode) {
+        document.body.classList.add('dark');
+        modeIcon.classList.add('fa-sun');
+        modeIcon.classList.remove('fa-moon');
+    } else {
+        modeIcon.classList.add('fa-moon');
+        modeIcon.classList.remove('fa-sun');
+    }
 
-        tableBody.innerHTML = ''; // Limpa a tabela
-
-
-
-        relatorios.forEach(relatorio => {
-
-            const row = tableBody.insertRow();
-
-            row.insertCell().textContent = relatorio.id;
-
-            row.insertCell().textContent = relatorio.nomeVeiculo;
-
-            row.insertCell().textContent = relatorio.nomeMotorista;
-
-            row.insertCell().textContent = relatorio.rota; // Nova célula para Rota
-
-            row.insertCell().textContent = relatorio.dataHoraSaida;
-
-            row.insertCell().textContent = relatorio.dataHoraChegada;
-
-            row.insertCell().textContent = relatorio.quilometragemInicial || '-'; // Exibe KM inicial ou '-'
-
-            row.insertCell().textContent = relatorio.quilometragemFinal || '-'; // Exibe KM final ou '-'
-
-            row.insertCell().textContent = relatorio.quilometragemPercorrida || '-'; // Exibe KM total ou '-'
-
-            row.insertCell().textContent = relatorio.status; // Nova célula para Status
-
-
-
-            const editCell = row.insertCell();
-
-            const editButton = document.createElement('button');
-
-            editButton.innerHTML = '<i class="bi bi-pencil-square"></i>'; // Ícone de editar
-
-            editButton.classList.add('edit-button');
-
-            editButton.title = 'Editar';
-
-            editButton.onclick = () => editRelatorio(relatorio.id);
-
-            editCell.appendChild(editButton);
-
-
-
-            const deleteCell = row.insertCell();
-
-            const deleteButton = document.createElement('button');
-
-            deleteButton.innerHTML = '<i class="bi bi-trash"></i>'; // Ícone de excluir
-
-            deleteButton.classList.add('delete-button');
-
-            deleteButton.title = 'Excluir';
-
-            deleteButton.onclick = () => deleteRelatorio(relatorio.id);
-
-            deleteCell.appendChild(deleteButton);
-
-        });
-
-    }
-
-
-
-    function editRelatorio(id) {
-
-        // Redireciona para a página de cadastro/edição com o ID do relatório
-
-        window.location.href = `relatorio.html?id=${id}`;
-
-    }
-
-
-
-    function deleteRelatorio(id) {
-
-        if (confirm(`Tem certeza que deseja excluir o relatório ID ${id}?`)) {
-
-            let relatorios = JSON.parse(localStorage.getItem('relatorios')) || [];
-
-            relatorios = relatorios.filter(relatorio => relatorio.id !== id);
-
-            localStorage.setItem('relatorios', JSON.stringify(relatorios));
-
-            alert('Relatório excluído com sucesso!');
-
-            loadRelatorios(); // Recarrega a tabela
-
-        }
-
-    }
-
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark');
+        if (document.body.classList.contains('dark')) {
+            modeIcon.classList.add('fa-sun');
+            modeIcon.classList.remove('fa-moon');
+            localStorage.setItem('darkMode', 'enabled');
+        } else {
+            modeIcon.classList.add('fa-moon');
+            modeIcon.classList.remove('fa-sun');
+            localStorage.setItem('darkMode', 'disabled');
+        }
+    });
 });
