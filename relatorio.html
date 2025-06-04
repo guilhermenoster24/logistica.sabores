@@ -29,8 +29,6 @@
 
             <div class="close-toggle" id="closeToggle">
                 <i class="fa-solid fa-2x fa-xmark"></i>
-                <!-- <i class="fa-solid fa-2x fa-circle-xmark"></i> -->
-                <!-- <i class="fa-solid fa-2x fa-right-from-bracket"></i> -->
             </div>
 
         </nav>
@@ -66,33 +64,29 @@
                         </select>
                     </div>
                 </div>
+                <div class="form-group"> <label for="rota">Rota/Destino</label>
+                    <input type="text" id="rota" placeholder="Informe a rota ou destino da viagem" required>
+                </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="data_saida">Data/Hora Saída</label>
-                        <input type="text" id="data_hora_saida" placeholder="dd/mm/aaaa --:--" required>
+                        <label for="data_saida">Data/Hora Saída Prevista</label> <input type="text" id="data_hora_saida" placeholder="dd/mm/aaaa --:--" required>
                     </div>
                     <div class="form-group">
-                        <label for="data_chegada">Data/Hora Chegada</label>
-                        <input type="text" id="data_hora_chegada" placeholder="dd/mm/aaaa --:--" required>
+                        <label for="data_chegada">Data/Hora Chegada Prevista</label> <input type="text" id="data_hora_chegada" placeholder="dd/mm/aaaa --:--" required>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="km_inicial">Km Inicial</label>
-                        <input type="number" id="quilometragemInicial" placeholder="Digite o Km Inicial" required>
-                    </div>
+                        <label for="km_inicial">Km Inicial (Informado pelo Motorista)</label> <input type="number" id="quilometragemInicial" placeholder="Digite o Km Inicial" disabled> </div>
                     <div class="form-group">
-                        <label for="km_final">Km Final</label>
-                        <input type="number" id="quilometragemFinal" placeholder="Digite o Km Final" required>
-                    </div>
+                        <label for="km_final">Km Final (Informado pelo Motorista)</label> <input type="number" id="quilometragemFinal" placeholder="Digite o Km Final" disabled> </div>
                     <div class="form-group">
                         <label for="km_total">Km Total</label>
                         <input type="number" id="quilometragemPercorrida" placeholder="Km Total" disabled>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="itinerario">Itinerário</label>
-                    <input type="text" id="itinerario" required>
+                    <label for="itinerario">Itinerário Detalhado</label> <input type="text" id="itinerario" required>
                 </div>
                 <div class="form-group">
                     <label for="observacao">Observação</label>
@@ -100,8 +94,7 @@
                 </div>
             </div>
             <div class="save-button-container">
-                <button type="submit" id="relatorioLink">Salvar</button>
-            </div>
+                <button type="submit" id="relatorioLink">Salvar Viagem</button> </div>
         </form>
     </main>
 
