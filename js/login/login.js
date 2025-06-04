@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Tentar login como Administrador
         if (username === adminUser && password === adminPass) {
             localStorage.setItem('loggedInUserType', 'admin');
-            alert('Login de Administrador bem-sucedido!');
+            // alert('Login de Administrador bem-sucedido!'); // Mensagem de sucesso removida
             window.location.href = 'cadastroMotorista.html'; // Redireciona para uma página de administrador
             return;
         }
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (motoristaLogado) {
             localStorage.setItem('loggedInUserType', 'motorista');
             localStorage.setItem('loggedInMotoristaId', motoristaLogado.id);
-            alert(`Login de Motorista bem-sucedido! Bem-vindo, ${motoristaLogado.nome}.`);
+            // alert(`Login de Motorista bem-sucedido! Bem-vindo, ${motoristaLogado.nome}.`); // Mensagem de sucesso removida
             window.location.href = 'minhasViagens.html'; // Redireciona para a nova página do motorista
         } else {
             alert('Usuário ou senha inválidos.');
