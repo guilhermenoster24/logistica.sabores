@@ -1,87 +1,70 @@
-document.addEventListener("DOMContentLoaded", function() {
-    const tableBody = document.getElementById("tableBody");
+document.addEventListener('DOMContentLoaded', function() {
+    const tableBody = document.getElementById('tableBody');
+    const motoristasRef = ref(window.database, 'motoristas');
 
-    const motoristasJSON = localStorage.getItem("Motoristas");
-    console.log("Dados no Local Storage:", motoristasJSON);
+    onValue(motoristasRef, (snapshot) => {
+        const motoristasData = snapshot.val();
+        const motoristasArray = [];
 
-    if (motoristasJSON) {
-        const motoristas = JSON.parse(motoristasJSON);
-        console.log("Dados após parse:", motoristas);
+        for (let firebaseId in motoristasData) {
+            motoristasArray.push({ id: firebaseId, ...motoristasData[firebaseId] });
+        }
+        
+        loadMotoristas(motoristasArray);
+    }, (errorObject) => {
+        console.error("A leitura de dados falhou: " + errorObject.name);
+        alert("Erro ao carregar motoristas do banco de dados.");
+    });
 
-        if (Array.isArray(motoristas)) {
-            motoristas.forEach((formData, index) => {
-                const formId = formData.id;
-                console.log("ID do motorista:", formId);
+    function loadMotoristas(motoristas) {
+        tableBody.innerHTML = '';
 
-                const row = document.createElement("tr");
-                row.style.height = "65px";
-                row.id = "row-" + formId;
+        if (motoristas.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="7">Nenhum motorista cadastrado.</td></tr>';
+            return;
+        }
 
-                // Coluna ID
-                const idCell = document.createElement("td");
-                idCell.classList.add("u-table-cell");
-                idCell.textContent = formId;
-                row.appendChild(idCell);
+        motoristas.forEach(motorista => {
+            const row = tableBody.insertRow();
+            row.insertCell().textContent = motorista.id;
+            row.insertCell().textContent = motorista.nome;
+            row.insertCell().textContent = motorista.email;
+            row.insertCell().textContent = motorista.rg;
+            row.insertCell().textContent = motorista.cpf;
 
-                // Coluna Nome
-                const nomeCell = document.createElement("td");
-                nomeCell.classList.add("u-table-cell");
-                nomeCell.textContent = formData.nome;
-                row.appendChild(nomeCell);
+            const editCell = row.insertCell();
+            const editButton = document.createElement('button');
+            editButton.innerHTML = '<i class="bi bi-pencil-square"></i>';
+            editButton.classList.add('edit-button');
+            editButton.title = 'Editar';
+            editButton.onclick = () => editMotorista(motorista.id); 
+            editCell.appendChild(editButton);
 
-                // Coluna Email
-                const emailCell = document.createElement("td");
-                emailCell.classList.add("u-table-cell");
-                emailCell.textContent = formData.email;
-                row.appendChild(emailCell);
+            const deleteCell = row.insertCell();
+            const deleteButton = document.createElement('button');
+            deleteButton.innerHTML = '<i class="bi bi-trash"></i>';
+            deleteButton.classList.add('delete-button');
+            deleteButton.title = 'Excluir';
+            deleteButton.onclick = () => deleteMotorista(motorista.id, motorista.nome); 
+            deleteCell.appendChild(deleteButton);
+        });
+    }
 
-                // Coluna RG
-                const rgCell = document.createElement("td");
-                rgCell.classList.add("u-table-cell");
-                rgCell.textContent = formData.rg;
-                row.appendChild(rgCell);
+    function editMotorista(firebaseId) {
+        window.location.href = `cadastroMotorista.html?id=${firebaseId}`;
+    }
 
-                // Coluna CPF
-                const cpfCell = document.createElement("td");
-                cpfCell.classList.add("u-table-cell");
-                cpfCell.textContent = formData.cpf;
-                row.appendChild(cpfCell);
-
-                // Coluna Editar
-                const editCell = document.createElement("td");
-                editCell.classList.add("u-table-cell");
-                const editButton = document.createElement("button");
-                editButton.classList.add("botaoEditar");
-                editButton.setAttribute("id", "botaoEditar");
-                editButton.textContent = "View";
-                editButton.addEventListener("click", function() {
-                    window.location.href = "cadastroMotorista.html?id=" + formId;
+    function deleteMotorista(firebaseId, nomeMotorista) {
+        if (confirm(`Tem certeza que deseja excluir o motorista ${nomeMotorista} (ID: ${firebaseId})?`)) {
+            const itemRef = ref(window.database, `motoristas/${firebaseId}`);
+            remove(itemRef)
+                .then(() => {
+                    alert('Motorista excluído com sucesso do Firebase!');
+                })
+                .catch(error => {
+                    console.error("Erro ao excluir motorista do Firebase: ", error);
+                    alert('Erro ao excluir motorista. Verifique o console.');
                 });
-                editCell.appendChild(editButton);
-                row.appendChild(editCell);
-
-                // Coluna Excluir
-                const deleteCell = document.createElement("td");
-                deleteCell.classList.add("u-table-cell");
-                const deleteButton = document.createElement("button");
-                deleteButton.classList.add("botaoExcluir");
-                deleteButton.setAttribute("id", "botaoExcluir");
-                deleteButton.textContent = "Excluir";
-                deleteButton.addEventListener("click", function() {
-                    if (confirm("Deseja confirmar a exclusão do Cadastro Motorista com ID: " + formId + "?")) {
-                        const updatedMotoristas = motoristas.filter(v => v.id !== formId);
-                        localStorage.setItem("Motoristas", JSON.stringify(updatedMotoristas));
-
-                        tableBody.removeChild(row);
-
-                        alert("Cadastro Motorista com ID: " + formId + " excluído com sucesso.");
-                    }
-                });
-                deleteCell.appendChild(deleteButton);
-                row.appendChild(deleteCell);
-
-                tableBody.appendChild(row);
-            });
-        } 
+        }
     }
 });
