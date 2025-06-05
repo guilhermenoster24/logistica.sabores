@@ -4,45 +4,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const motoristaSelect = document.getElementById('motorista');
     const relatoriosRef = ref(window.database, 'relatorios');
 
-    // Elementos de KM
     const quilometragemInicialInput = document.getElementById("quilometragemInicial");
     const quilometragemFinalInput = document.getElementById("quilometragemFinal");
     const quilometragemPercorridaInput = document.getElementById("quilometragemPercorrida");
-
-    // Lógica para preencher selects (reutilizada de relatorioListas.js)
-    const loadSelects = () => {
-        const veiculosRef = ref(window.database, 'veiculos');
-        const motoristasRef = ref(window.database, 'motoristas');
-
-        onValue(veiculosRef, (snapshot) => {
-            veiculoSelect.innerHTML = '<option value="">Escolha o veículo</option>';
-            const veiculosData = snapshot.val();
-            if (veiculosData) {
-                for (let firebaseId in veiculosData) {
-                    const veiculo = { id: firebaseId, ...veiculosData[firebaseId] };
-                    const option = document.createElement('option');
-                    option.value = veiculo.id;
-                    option.textContent = `${veiculo.placa} - ${veiculo.modelo}`;
-                    veiculoSelect.appendChild(option);
-                }
-            }
-        }, { onlyOnce: true }); // Carrega apenas uma vez para edição
-
-        onValue(motoristasRef, (snapshot) => {
-            motoristaSelect.innerHTML = '<option value="">Escolha o motorista</option>';
-            const motoristasData = snapshot.val();
-            if (motoristasData) {
-                for (let firebaseId in motoristasData) {
-                    const motorista = { id: firebaseId, ...motoristasData[firebaseId] };
-                    const option = document.createElement('option');
-                    option.value = motorista.id;
-                    option.textContent = motorista.nome;
-                    motoristaSelect.appendChild(option);
-                }
-            }
-        }, { onlyOnce: true }); // Carrega apenas uma vez para edição
-    };
-    loadSelects(); // Carrega os selects ao iniciar a página
 
     // Lógica de cálculo de quilometragem (de validaQuilometragem.js)
     quilometragemInicialInput.addEventListener("input", calcularQuilometragem);
@@ -77,12 +41,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const $quilometragemPercorrida = document.querySelector('#quilometragemPercorrida');
         const errorsMessage = 'A quilometragem percorrida deve ser um número positivo e superior a zero.';
         
-        $quilometragemPercorrida.removeAttribute("disabled"); // Habilita para mostrar a validação
+        $quilometragemPercorrida.removeAttribute("disabled");
         $quilometragemPercorrida.setCustomValidity(errorsMessage);
         $quilometragemPercorrida.reportValidity();
 
         setTimeout(function() {
-            $quilometragemPercorrida.setAttribute("disabled", "disabled"); // Desabilita novamente
+            $quilometragemPercorrida.setAttribute("disabled", "disabled");
         }, 3000);
     }
     // Fim da lógica de quilometragem
@@ -92,7 +56,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const relatorioFirebaseId = urlParams.get('id');
 
     if (relatorioFirebaseId) {
-        // Desabilitar campos inicialmente (admin só pode alterar após clicar em "Alterar")
         document.getElementById("veiculo").disabled = true;
         document.getElementById("motorista").disabled = true;
         document.getElementById("data_hora_saida").disabled = true;
@@ -100,14 +63,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById("quilometragemInicial").disabled = true;
         document.getElementById("quilometragemFinal").disabled = true;
         document.getElementById("itinerario").disabled = true;
-        document.getElementById("observacao").disabled = true; // Adicionado para desabilitar também
+        document.getElementById("observacao").disabled = true;
 
         document.getElementById('botaoPesquisar').style.display = 'none';
-        document.getElementById('botaoExcluir').style.display = 'inline-block'; // Excluir fica visível
-        document.getElementById('botaoAlterar').style.display = 'inline-block'; // Alterar fica visível
+        document.getElementById('botaoExcluir').style.display = 'inline-block';
+        document.getElementById('botaoAlterar').style.display = 'inline-block';
         document.getElementById('salvar').textContent = 'Atualizar';
 
-        // Lógica de "Alterar" para habilitar campos
         document.getElementById("botaoAlterar").addEventListener("click", function() {
             document.getElementById("veiculo").disabled = false;
             document.getElementById("motorista").disabled = false;
@@ -116,10 +78,9 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById("quilometragemInicial").disabled = false;
             document.getElementById("quilometragemFinal").disabled = false;
             document.getElementById("itinerario").disabled = false;
-            document.getElementById("observacao").disabled = false; // Habilitar observação
+            document.getElementById("observacao").disabled = false;
         });
 
-        // Carregar dados para edição
         const itemRef = ref(window.database, `relatorios/${relatorioFirebaseId}`);
         once(itemRef)
             .then(snapshot => {
@@ -145,7 +106,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert("Erro ao carregar dados da viagem.");
             });
         
-        // Lógica de Exclusão (de editarRelatorio.js, adaptada para Firebase)
         document.getElementById("botaoExcluir").addEventListener("click", function(event) {
             event.preventDefault();
             if (confirm("Deseja confirmar a exclusão da viagem com ID: " + relatorioFirebaseId + "?")) {
@@ -162,9 +122,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-    } else { // Não está em modo de edição, é um novo cadastro
-        document.getElementById('botaoAlterar').style.display = 'none'; // Esconde Alterar
-        document.getElementById('botaoExcluir').style.display = 'none'; // Esconde Excluir
+    } else {
+        document.getElementById('botaoAlterar').style.display = 'none';
+        document.getElementById('botaoExcluir').style.display = 'none';
     }
     // Fim da lógica de edição/exclusão
 
@@ -215,9 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var errorsMessage = 'Data do século passado.';
         $data_hora_saida.setCustomValidity(errorsMessage); $data_hora_saida.reportValidity();
     }
-    // Fim da lógica de validação de Data/Hora Saída
 
-    // Lógica de validação de Data/Hora Chegada (de relatorio.js)
     function validarDataHoraChegada(dataHoraString) {
         const $data_hora_chegada = document.querySelector('#data_hora_chegada');
         if (dataHoraString.trim() === '') { $data_hora_chegada.setCustomValidity(''); return true; }
@@ -260,9 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var errorsMessage = 'Data do século passado.';
         $data_hora_chegada.setCustomValidity(errorsMessage); $data_hora_chegada.reportValidity();
     }
-    // Fim da lógica de validação de Data/Hora Chegada
 
-    // Lógica de validação de Ordem das Datas (de relatorio.js)
     function parseDataHoraString(dataHoraString) {
         const partesDataHora = dataHoraString.split(' ');
         const dataString = partesDataHora[0];
@@ -307,43 +263,40 @@ document.addEventListener('DOMContentLoaded', function() {
         $data_hora_saida.setCustomValidity(errorsMessage); $data_hora_saida.reportValidity();
         $data_hora_chegada.setCustomValidity(errorsMessage); $data_hora_chegada.reportValidity();
     }
-    // Fim da lógica de validação de Ordem das Datas
 
-    // Consolidação da validação e submissão do formulário (de validarFormularioRelatorio.js e relatorio.js)
     relatorioForm.addEventListener('submit', function(event) {
-        event.preventDefault(); // Impede o envio padrão do formulário
+        event.preventDefault();
 
         let formIsValid = true;
 
-        // 1. Validar campos individualmente e com as funções de validação
         if (!veiculoSelect.value) { formIsValid = false; veiculoSelect.setCustomValidity('Selecione um veículo.'); veiculoSelect.reportValidity(); } else { veiculoSelect.setCustomValidity(''); }
         if (!motoristaSelect.value) { formIsValid = false; motoristaSelect.setCustomValidity('Selecione um motorista.'); motoristaSelect.reportValidity(); } else { motoristaSelect.setCustomValidity(''); }
         
         if (!validarDataHoraSaida(document.getElementById('data_hora_saida').value)) { formIsValid = false; }
         if (!validarDataHoraChegada(document.getElementById('data_hora_chegada').value)) { formIsValid = false; }
         if (!validarOrdemDatas(document.getElementById('data_hora_saida').value, document.getElementById('data_hora_chegada').value)) { formIsValid = false; }
-        // Chamada da função que você tinha para diferença de meses. Reavalie se é necessária
-        // if (!validarDataHora(document.getElementById('data_hora_saida').value, document.getElementById('data_hora_chegada').value)) { formIsValid = false; }
+
+        // A função 'validarDataHora' que verifica "mais de um mês de diferença" está faltando.
+        // Se a validação `mensagemAlertaDataDestoante` é para ser chamada, precisa ser integrada aqui.
+        // Por agora, vou pular a chamada dela, pois a `validarOrdemDatas` já trata o principal.
+        // Se você precisa dessa validação, adicione a chamada à função `validarDataHora` se ela existir em algum lugar ou a lógica de checagem de "mais de um mês".
+
 
         if (!document.getElementById('rota').value.trim()) { formIsValid = false; document.getElementById('rota').setCustomValidity('Informe a rota.'); document.getElementById('rota').reportValidity(); } else { document.getElementById('rota').setCustomValidity(''); }
         if (!document.getElementById('itinerario').value.trim()) { formIsValid = false; document.getElementById('itinerario').setCustomValidity('Informe o itinerário.'); document.getElementById('itinerario').reportValidity(); } else { document.getElementById('itinerario').setCustomValidity(''); }
 
-        // Validação de Quilometragem (se não estiver disabled)
-        if (!quilometragemInicialInput.disabled && !validaQuilometragemTotal()) { // Valida KM se for campo editável pelo admin
+        if (!quilometragemInicialInput.disabled && !validaQuilometragemTotal()) {
             formIsValid = false;
         }
 
-        // 2. Verifica a validade do formulário HTML5 (para campos 'required' e 'type=email' etc.)
         if (!this.checkValidity()) {
             formIsValid = false;
         }
 
-        // Se o formulário não é válido, para por aqui
         if (!formIsValid) {
-            return; // Sai da função, impedindo o salvamento
+            return;
         }
 
-        // Se o formulário é válido, procede com o salvamento/atualização no Firebase
         const selectedVeiculoOption = veiculoSelect.options[veiculoSelect.selectedIndex];
         const selectedMotoristaOption = motoristaSelect.options[motoristaSelect.selectedIndex];
 
@@ -360,17 +313,15 @@ document.addEventListener('DOMContentLoaded', function() {
             quilometragemPercorrida: quilometragemPercorridaInput.value,
             itinerario: document.getElementById('itinerario').value,
             observacao: document.getElementById('observacao').value,
-            status: 'Pendente' // Status inicial (será atualizado pelo motorista)
+            status: 'Pendente'
         };
 
         if (relatorioFirebaseId) {
-            // Modo de Edição: Atualizar
             const itemRef = ref(window.database, `relatorios/${relatorioFirebaseId}`);
             
-            // Antes de atualizar, recupere o status original para não sobrescrever
             once(itemRef).then(snapshot => {
                 const originalRelatorio = snapshot.val();
-                relatorioData.status = originalRelatorio.status || 'Pendente'; // Mantém o status existente
+                relatorioData.status = originalRelatorio.status || 'Pendente';
 
                 return update(itemRef, relatorioData);
             })
@@ -383,21 +334,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Erro ao atualizar viagem. Verifique o console.');
             });
         } else {
-            // Modo de Cadastro: Salvar
             push(relatoriosRef, relatorioData)
                 .then(() => {
                     alert('Viagem cadastrada com sucesso no Firebase!');
                     relatorioForm.reset();
-                    // Limpa os campos de KM também
                     quilometragemInicialInput.value = '';
                     quilometragemFinalInput.value = '';
                     quilometragemPercorridaInput.value = '';
-
-                    // Gerar PDF (opcional, aqui é gerado após o cadastro)
-                    // Para gerar o PDF com o ID do Firebase, você precisaria do ID retornado pelo push()
-                    // Exemplo:
-                    // const newRelatorioKey = newRef.key; // Se push() retorna a referência
-                    // gerarPDFRelatorio({ id: newRelatorioKey, ...relatorioData });
                 })
                 .catch(error => {
                     console.error("Erro ao cadastrar viagem no Firebase: ", error);
@@ -406,14 +349,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Função gerarPDF() (do validarFormularioRelatorio.js) - Adaptada para ser chamada manualmente se necessário
-    // OBS: O PDF gerado aqui não terá o ID do Firebase se for um novo cadastro
-    // Se precisar do ID, a geração de PDF deve ser feita após o push (capturando o ID retornado pela promise)
-    // ou de uma tela de controle de viagens.
-    window.gerarPDF = function() { // Tornando global para ser chamada externamente se necessário
+    window.gerarPDF = function() {
         var veiculo = document.getElementById('veiculo').value;
         var motorista = document.getElementById('motorista').value;
-        var rota = document.getElementById('rota').value; // Novo
+        var rota = document.getElementById('rota').value;
         var dataHoraSaida = document.getElementById('data_hora_saida').value;
         var dataHoraChegada = document.getElementById('data_hora_chegada').value;
         var quilometragemInicial = document.getElementById('quilometragemInicial').value;
@@ -426,7 +365,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <h1 style="font-size: 30px; text-align: center;">Informações da Viagem</h1><br><br>
             <p><strong>Veículo:</strong> ${veiculo}</p><br>
             <p><strong>Motorista:</strong> ${motorista}</p><br>
-            <p><strong>Rota:</strong> ${rota}</p><br> <p><strong>Data e Hora de Saída:</strong> ${dataHoraSaida}</p><br>
+            <p><strong>Rota:</strong> ${rota}</p><br>
+            <p><strong>Data e Hora de Saída:</strong> ${dataHoraSaida}</p><br>
             <p><strong>Data e Hora de Chegada:</strong> ${dataHoraChegada}</p><br>
             <p><strong>Quilometragem Inicial:</strong> ${quilometragemInicial} Km</p><br>
             <p><strong>Quilometragem Final:</strong> ${quilometragemFinal} Km</p><br>
@@ -443,15 +383,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var opt = {
             margin: 1,
-            filename: 'registro-viagem-' + formattedDate + '.pdf', // Nome do arquivo mais genérico
+            filename: 'registro-viagem-' + formattedDate + '.pdf',
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
         };
 
         html2pdf().from(content).set(opt).save();
     };
-
-    // A função 'limparCampos' agora é redundante para o submit, pois o reset do formulário já faz isso.
-    // Mas pode ser mantida se for chamada por outros lugares.
-    // function limparCampos() { /* ... */ } 
 });
