@@ -1,35 +1,39 @@
-document.addEventListener('DOMContentLoaded', function () {
-    let motoristas = JSON.parse(localStorage.getItem('Motoristas')) || [];
-    let motoristaSelect = document.getElementById('motorista');
+document.addEventListener('DOMContentLoaded', function() {
+    const veiculoSelect = document.getElementById('veiculo');
+    const motoristaSelect = document.getElementById('motorista');
 
-    if (motoristas.length === 0) {
-        const option = document.createElement('option');
-        option.textContent = 'Nenhum motorista cadastrado ainda';
-        option.disabled = true;
-        motoristaSelect.appendChild(option);
-    } else {
-        motoristas.forEach(function(motorista) {
-            const option = document.createElement('option');
-            option.textContent = motorista.nome;
-            motoristaSelect.appendChild(option);
-        });
-    }
-});
+    const veiculosRef = ref(window.database, 'veiculos');
+    const motoristasRef = ref(window.database, 'motoristas');
 
-document.addEventListener('DOMContentLoaded', function () {
-    let veiculos = JSON.parse(localStorage.getItem('Veiculos')) || [];
-    let veiculoSelect = document.getElementById('veiculo');
+    onValue(veiculosRef, (snapshot) => {
+        veiculoSelect.innerHTML = '<option value="">Escolha o veículo</option>';
+        const veiculosData = snapshot.val();
+        if (veiculosData) {
+            for (let firebaseId in veiculosData) {
+                const veiculo = { id: firebaseId, ...veiculosData[firebaseId] };
+                const option = document.createElement('option');
+                option.value = veiculo.id;
+                option.textContent = `${veiculo.placa} - ${veiculo.modelo}`;
+                veiculoSelect.appendChild(option);
+            }
+        }
+    }, (error) => {
+        console.error("Erro ao carregar veículos para o select: ", error);
+    });
 
-    if (veiculos.length === 0) {
-        const option = document.createElement('option');
-        option.textContent = 'Nenhum veículo cadastrado ainda';
-        option.disabled = true;
-        veiculoSelect.appendChild(option);
-    } else {
-        veiculos.forEach(function(veiculo) {
-            const option = document.createElement('option');
-            option.textContent = veiculo.placa;
-            veiculoSelect.appendChild(option);
-        });
-    }
+    onValue(motoristasRef, (snapshot) => {
+        motoristaSelect.innerHTML = '<option value="">Escolha o motorista</option>';
+        const motoristasData = snapshot.val();
+        if (motoristasData) {
+            for (let firebaseId in motoristasData) {
+                const motorista = { id: firebaseId, ...motoristasData[firebaseId] };
+                const option = document.createElement('option');
+                option.value = motorista.id;
+                option.textContent = motorista.nome;
+                motoristaSelect.appendChild(option);
+            }
+        }
+    }, (error) => {
+        console.error("Erro ao carregar motoristas para o select: ", error);
+    });
 });
