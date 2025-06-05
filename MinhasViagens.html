@@ -14,11 +14,9 @@
 </head>
 <body>
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
         import { getDatabase, ref, push, onValue, update, remove, query, orderByChild, equalTo, once } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBbLOridWeWY-ORKtlhY4O3YSqdF3wWTAE",
             authDomain: "logistica-sabores.firebaseapp.com",
@@ -29,10 +27,17 @@
             appId: "1:277437802062:web:93171f9ea31240e11c851f"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        window.database = getDatabase(app); // Torna 'database' globalmente acessível
-        window.dbRef = ref(window.database); // Cria uma referência raiz do banco de dados e a torna global
+        window.database = getDatabase(app);
+        window.ref = ref;
+        window.push = push;
+        window.onValue = onValue;
+        window.update = update;
+        window.remove = remove;
+        window.query = query;
+        window.orderByChild = orderByChild;
+        window.equalTo = equalTo;
+        window.once = once;
     </script>
 
     <header>
@@ -77,7 +82,8 @@
                     </tr>
                 </thead>
                 <tbody id="tableBodyViagensMotorista">
-                    </tbody>
+                    
+                </tbody>
             </table>
         </div>
     </main>
@@ -85,8 +91,8 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.js"></script>
     <script>
-      // Usando máscara para a data/hora, caso precise de input no futuro
-      // $('#data_hora_saida').mask('00/00/0000 00:00');
+      // jQuery Masks (mantidos)
+      // $('#data_hora_saida').mask('00/00/0000 00:00'); 
     </script>
 
     <script src="js/motorista/minhasViagens.js"></script>
