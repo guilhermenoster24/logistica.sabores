@@ -1,87 +1,75 @@
-document.addEventListener("DOMContentLoaded", function() {
-    const tableBody = document.getElementById("tableBody");
+document.addEventListener('DOMContentLoaded', function() {
+    const tableBody = document.getElementById('tableBody');
+    const relatoriosRef = ref(window.database, 'relatorios');
 
-    const viagensJSON = localStorage.getItem("Viagens");
-    console.log("Dados no Local Storage:", viagensJSON);
+    onValue(relatoriosRef, (snapshot) => {
+        const relatoriosData = snapshot.val();
+        const relatoriosArray = [];
 
-    if (viagensJSON) {
-        const viagens = JSON.parse(viagensJSON);
-        console.log("Dados após parse:", viagens);
+        for (let firebaseId in relatoriosData) {
+            relatoriosArray.push({ id: firebaseId, ...relatoriosData[firebaseId] });
+        }
+        
+        loadRelatorios(relatoriosArray);
+    }, (errorObject) => {
+        console.error("A leitura de dados falhou: " + errorObject.name);
+        alert("Erro ao carregar relatórios do banco de dados.");
+    });
 
-        if (Array.isArray(viagens)) {
-            viagens.forEach((formData, index) => {
-                const formId = formData.id;
-                console.log("ID da viagem:", formId);
+    function loadRelatorios(relatorios) {
+        tableBody.innerHTML = '';
 
-                const row = document.createElement("tr");
-                row.style.height = "65px";
-                row.id = "row-" + formId;
+        if (relatorios.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="12">Nenhuma viagem cadastrada.</td></tr>';
+            return;
+        }
 
-                // Coluna ID
-                const idCell = document.createElement("td");
-                idCell.classList.add("u-table-cell");
-                idCell.textContent = formId;
-                row.appendChild(idCell);
+        relatorios.forEach(relatorio => {
+            const row = tableBody.insertRow();
+            row.insertCell().textContent = relatorio.id;
+            row.insertCell().textContent = relatorio.nomeVeiculo;
+            row.insertCell().textContent = relatorio.nomeMotorista;
+            row.insertCell().textContent = relatorio.rota;
+            row.insertCell().textContent = relatorio.dataHoraSaida;
+            row.insertCell().textContent = relatorio.dataHoraChegada;
+            row.insertCell().textContent = relatorio.quilometragemInicial || '-';
+            row.insertCell().textContent = relatorio.quilometragemFinal || '-';
+            row.insertCell().textContent = relatorio.quilometragemPercorrida || '-';
+            row.insertCell().textContent = relatorio.status;
 
-                // Coluna Veículo
-                const veiculoCell = document.createElement("td");
-                veiculoCell.classList.add("u-table-cell");
-                veiculoCell.textContent = formData.veiculo;
-                row.appendChild(veiculoCell);
+            const editCell = row.insertCell();
+            const editButton = document.createElement('button');
+            editButton.innerHTML = '<i class="bi bi-pencil-square"></i>';
+            editButton.classList.add('edit-button');
+            editButton.title = 'Editar';
+            editButton.onclick = () => editRelatorio(relatorio.id); 
+            editCell.appendChild(editButton);
 
-                // Coluna Motorista
-                const motoristaCell = document.createElement("td");
-                motoristaCell.classList.add("u-table-cell");
-                motoristaCell.textContent = formData.motorista;
-                row.appendChild(motoristaCell);
+            const deleteCell = row.insertCell();
+            const deleteButton = document.createElement('button');
+            deleteButton.innerHTML = '<i class="bi bi-trash"></i>';
+            deleteButton.classList.add('delete-button');
+            deleteButton.title = 'Excluir';
+            deleteButton.onclick = () => deleteRelatorio(relatorio.id); 
+            deleteCell.appendChild(deleteButton);
+        });
+    }
 
-                // Coluna Data/Hora Saída
-                const dataHoraSaidaCell = document.createElement("td");
-                dataHoraSaidaCell.classList.add("u-table-cell");
-                dataHoraSaidaCell.textContent = formData.dataHoraSaida;
-                row.appendChild(dataHoraSaidaCell);
+    function editRelatorio(firebaseId) {
+        window.location.href = `relatorio.html?id=${firebaseId}`;
+    }
 
-                // Coluna Data/Hora Chegada
-                const dataHoraChegadaCell = document.createElement("td");
-                dataHoraChegadaCell.classList.add("u-table-cell");
-                dataHoraChegadaCell.textContent = formData.dataHoraChegada;
-                row.appendChild(dataHoraChegadaCell);
-
-                // Coluna Editar
-                const editCell = document.createElement("td");
-                editCell.classList.add("u-table-cell");
-                const editButton = document.createElement("button");
-                editButton.classList.add("botaoEditar")
-                editButton.setAttribute("id", "botaoEditar");
-                editButton.textContent = "View";
-                editButton.addEventListener("click", function() {
-                    window.location.href = "relatorio.html?id=" + formId;
+    function deleteRelatorio(firebaseId) {
+        if (confirm(`Tem certeza que deseja excluir o relatório ID ${firebaseId}?`)) {
+            const itemRef = ref(window.database, `relatorios/${firebaseId}`);
+            remove(itemRef)
+                .then(() => {
+                    alert('Relatório excluído com sucesso do Firebase!');
+                })
+                .catch(error => {
+                    console.error("Erro ao excluir relatório do Firebase: ", error);
+                    alert('Erro ao excluir relatório. Verifique o console.');
                 });
-                editCell.appendChild(editButton);
-                row.appendChild(editCell);
-
-                // Coluna Excluir
-                const deleteCell = document.createElement("td");
-                deleteCell.classList.add("u-table-cell");
-                const deleteButton = document.createElement("button");
-                deleteButton.classList.add("botaoExcluir");
-                deleteButton.setAttribute("id", "botaoExcluir");
-                deleteButton.textContent = "Excluir";
-                deleteButton.addEventListener("click", function() {
-                    if (confirm("Deseja confirmar a exclusão do formulário com ID: " + formId + "?")) {
-                        const updatedViagens = viagens.filter(v => v.id !== formId);
-                        localStorage.setItem("Viagens", JSON.stringify(updatedViagens));
-
-                        tableBody.removeChild(row);
-
-                        alert("Formulário com ID: " + formId + " excluído com sucesso.");
-                    }
-                });
-                deleteCell.appendChild(deleteButton);
-                row.appendChild(deleteCell);
-
-                tableBody.appendChild(row);
-            });
-        } 
+        }
     }
 });
