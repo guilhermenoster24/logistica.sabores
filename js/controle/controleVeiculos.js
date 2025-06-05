@@ -1,88 +1,70 @@
-document.addEventListener("DOMContentLoaded", function() {
-    const tableBody = document.getElementById("tableBody");
+document.addEventListener('DOMContentLoaded', function() {
+    const tableBody = document.getElementById('tableBody');
+    const veiculosRef = ref(window.database, 'veiculos');
 
-    const veiculosJSON = localStorage.getItem("Veiculos");
-    console.log("Dados no Local Storage:", veiculosJSON);
+    onValue(veiculosRef, (snapshot) => {
+        const veiculosData = snapshot.val();
+        const veiculosArray = [];
 
-    if (veiculosJSON) {
-        const veiculos = JSON.parse(veiculosJSON);
-        console.log("Dados após parse:", veiculos);
+        for (let firebaseId in veiculosData) {
+            veiculosArray.push({ id: firebaseId, ...veiculosData[firebaseId] });
+        }
+        
+        loadVeiculos(veiculosArray);
+    }, (errorObject) => {
+        console.error("A leitura de dados falhou: " + errorObject.name);
+        alert("Erro ao carregar veículos do banco de dados.");
+    });
 
-        if (Array.isArray(veiculos)) {
+    function loadVeiculos(veiculos) {
+        tableBody.innerHTML = '';
 
-            veiculos.forEach((formData, index) => {
-                const formId = formData.id;
-                console.log("ID do veiculo:", formId);
+        if (veiculos.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="7">Nenhum veículo cadastrado.</td></tr>';
+            return;
+        }
 
-                const row = document.createElement("tr");
-                row.style.height = "65px";
-                row.id = "row-" + formId;
+        veiculos.forEach(veiculo => {
+            const row = tableBody.insertRow();
+            row.insertCell().textContent = veiculo.id;
+            row.insertCell().textContent = veiculo.placa;
+            row.insertCell().textContent = veiculo.marca;
+            row.insertCell().textContent = veiculo.modelo;
+            row.insertCell().textContent = veiculo.cor;
 
-                // Coluna ID
-                const idCell = document.createElement("td");
-                idCell.classList.add("u-table-cell");
-                idCell.textContent = formId;
-                row.appendChild(idCell);
+            const editCell = row.insertCell();
+            const editButton = document.createElement('button');
+            editButton.innerHTML = '<i class="bi bi-pencil-square"></i>';
+            editButton.classList.add('edit-button');
+            editButton.title = 'Editar';
+            editButton.onclick = () => editVeiculo(veiculo.id); 
+            editCell.appendChild(editButton);
 
-                // Coluna Placa
-                const placaCell = document.createElement("td");
-                placaCell.classList.add("u-table-cell");
-                placaCell.textContent = formData.placa;
-                row.appendChild(placaCell);
+            const deleteCell = row.insertCell();
+            const deleteButton = document.createElement('button');
+            deleteButton.innerHTML = '<i class="bi bi-trash"></i>';
+            deleteButton.classList.add('delete-button');
+            deleteButton.title = 'Excluir';
+            deleteButton.onclick = () => deleteVeiculo(veiculo.id, veiculo.placa); 
+            deleteCell.appendChild(deleteButton);
+        });
+    }
 
-                // Coluna Marca
-                const marcaCell = document.createElement("td");
-                marcaCell.classList.add("u-table-cell");
-                marcaCell.textContent = formData.marca;
-                row.appendChild(marcaCell);
+    function editVeiculo(firebaseId) {
+        window.location.href = `cadastroVeiculo.html?id=${firebaseId}`;
+    }
 
-                // Coluna Modelo
-                const modeloCell = document.createElement("td");
-                modeloCell.classList.add("u-table-cell");
-                modeloCell.textContent = formData.modelo;
-                row.appendChild(modeloCell);
-
-                // Coluna Cor
-                const corCell = document.createElement("td");
-                corCell.classList.add("u-table-cell");
-                corCell.textContent = formData.cor;
-                row.appendChild(corCell);
-
-                // Coluna Editar
-                const editCell = document.createElement("td");
-                editCell.classList.add("u-table-cell");
-                const editButton = document.createElement("button");
-                editButton.classList.add("botaoEditar");
-                editButton.setAttribute("id", "botaoEditar");
-                editButton.textContent = "View";
-                editButton.addEventListener("click", function() {
-                    window.location.href = "cadastroVeiculo.html?id=" + formId;
+    function deleteVeiculo(firebaseId, placaVeiculo) {
+        if (confirm(`Tem certeza que deseja excluir o veículo de placa ${placaVeiculo} (ID: ${firebaseId})?`)) {
+            const itemRef = ref(window.database, `veiculos/${firebaseId}`);
+            remove(itemRef)
+                .then(() => {
+                    alert('Veículo excluído com sucesso do Firebase!');
+                })
+                .catch(error => {
+                    console.error("Erro ao excluir veículo do Firebase: ", error);
+                    alert('Erro ao excluir veículo. Verifique o console.');
                 });
-                editCell.appendChild(editButton);
-                row.appendChild(editCell);
-
-                // Coluna Excluir
-                const deleteCell = document.createElement("td");
-                deleteCell.classList.add("u-table-cell");
-                const deleteButton = document.createElement("button");
-                deleteButton.classList.add("botaoExcluir");
-                deleteButton.setAttribute("id", "botaoExcluir");
-                deleteButton.textContent = "Excluir";
-                deleteButton.addEventListener("click", function() {
-                    if (confirm("Deseja confirmar a exclusão do Cadastro Veículo com ID: " + formId + "?")) {
-                        const updatedVeiculos = veiculos.filter(v => v.id !== formId);
-                        localStorage.setItem("Veiculos", JSON.stringify(updatedVeiculos));
-
-                        tableBody.removeChild(row);
-
-                        alert("Cadastro Veículo com ID: " + formId + " excluído com sucesso.");
-                    }
-                });
-                deleteCell.appendChild(deleteButton);
-                row.appendChild(deleteCell);
-
-                tableBody.appendChild(row);
-            });
-        } 
+        }
     }
 });
