@@ -1,156 +1,111 @@
 document.addEventListener('DOMContentLoaded', function() {
-    if (window.location.href.includes('id=')) {
-        document.getElementById("placa").disabled = true;
-        document.getElementById("marca").disabled = true;
-        document.getElementById("modelo").disabled = true;
-        document.getElementById("ano_fabricacao").disabled = true;
-        document.getElementById("cor").disabled = true;
-        document.getElementById("data_aquisicao").disabled = true;
-        document.getElementById("licenciamento").disabled = true;
-        document.getElementById("renavam").disabled = true;
-        document.getElementById("km_inicial").disabled = true;
-        document.getElementById("categoriaVeiculo").disabled = true;
-        document.getElementById("tipoCombustivel").disabled = true;
-        }
-});
-
-
-document.getElementById("botaoAlterar").addEventListener("click", function() {
-    if (window.location.href.includes('id=')) {
-        document.getElementById("placa").disabled = false;
-        document.getElementById("marca").disabled = false;
-        document.getElementById("modelo").disabled = false;
-        document.getElementById("ano_fabricacao").disabled = false;
-        document.getElementById("cor").disabled = false;
-        document.getElementById("data_aquisicao").disabled = false;
-        document.getElementById("licenciamento").disabled = false;
-        document.getElementById("renavam").disabled = false;
-        document.getElementById("km_inicial").disabled = false;
-        document.getElementById("categoriaVeiculo").disabled = false;
-        document.getElementById("tipoCombustivel").disabled = false;
-    }
-});
-
-
-
-document.addEventListener("DOMContentLoaded", function() {
-    preencherFormularioVeiculo();
-});
-
-function preencherFormularioVeiculo() {
     const urlParams = new URLSearchParams(window.location.search);
-    const veiculoId = urlParams.get('id');
+    const veiculoFirebaseId = urlParams.get('id');
 
-    if (veiculoId) {
-        const veiculosJSON = localStorage.getItem("Veiculos");
-        if (veiculosJSON) {
-            const veiculos = JSON.parse(veiculosJSON);
-            const veiculo = veiculos.find(v => v.id === veiculoId);
-            if (veiculo) {               
-                document.getElementById("placa").value = veiculo.placa;
-                document.getElementById("marca").value = veiculo.marca;
-                document.getElementById("modelo").value = veiculo.modelo;
-                document.getElementById("ano_fabricacao").value = veiculo.anoFabricacao;
-                document.getElementById("cor").value = veiculo.cor;
-                document.getElementById("data_aquisicao").value = veiculo.dataAquisicao;
-                document.getElementById("licenciamento").value = veiculo.licenciamento;
-                document.getElementById("renavam").value = veiculo.renavam;
-                document.getElementById("km_inicial").value = veiculo.kmInicial;
-                document.getElementById("categoriaVeiculo").value = veiculo.categoriaVeiculo;
-                document.getElementById("tipoCombustivel").value = veiculo.tipoCombustivel;
+    const veiculoForm = document.getElementById('veiculoForm');
+    const veiculosRef = ref(window.database, 'veiculos');
 
-            } 
-        } 
-    } 
-}
+    if (veiculoFirebaseId) {
+        document.getElementById('botaoPesquisar').style.display = 'none';
+        document.getElementById('botaoAlterar').style.display = 'none';
+        document.getElementById('botaoExcluir').style.display = 'none';
+        document.getElementById('salvar').textContent = 'Atualizar'; 
 
-
-document.getElementById("botaoExcluir").addEventListener("click", function(event) {
-    event.preventDefault();
-    
-    function getParameterByName(name) {
-        let url = new URL(window.location.href);
-        return url.searchParams.get(name);
+        const itemRef = ref(window.database, `veiculos/${veiculoFirebaseId}`);
+        once(itemRef)
+            .then(snapshot => {
+                const veiculo = snapshot.val();
+                if (veiculo) {
+                    document.getElementById('placa').value = veiculo.placa;
+                    document.getElementById('marca').value = veiculo.marca;
+                    document.getElementById('modelo').value = veiculo.modelo;
+                    document.getElementById('ano_fabricacao').value = veiculo.anoFabricacao;
+                    document.getElementById('cor').value = veiculo.cor;
+                    document.getElementById('data_aquisicao').value = veiculo.dataAquisicao;
+                    document.getElementById('licenciamento').value = veiculo.licenciamento;
+                    document.getElementById('renavam').value = veiculo.renavam;
+                    document.getElementById('km_inicial').value = veiculo.kmInicial;
+                    document.getElementById('categoriaVeiculo').value = veiculo.categoriaVeiculo;
+                    document.getElementById('tipoCombustivel').value = veiculo.tipoCombustivel;
+                } else {
+                    alert('Veículo não encontrado no Firebase.');
+                    window.location.href = 'controleVeiculos.html';
+                }
+            })
+            .catch(error => {
+                console.error("Erro ao carregar veículo para edição: ", error);
+                alert("Erro ao carregar dados do veículo.");
+            });
     }
 
-    var formId = getParameterByName("id");
+    veiculoForm.addEventListener('submit', function(event) {
+        event.preventDefault();
 
-    if (!formId) {
-        limparCampos();
-        return;
-    }
+        if (!veiculoForm.checkValidity()) {
+            alert('Por favor, preencha todos os campos obrigatórios.');
+            return;
+        }
 
-    var confirmar = confirm("Deseja confirmar a exclusão do cadastro com ID: " + formId + "?");
+        const updatedVeiculo = {
+            placa: document.getElementById('placa').value,
+            marca: document.getElementById('marca').value,
+            modelo: document.getElementById('modelo').value,
+            anoFabricacao: document.getElementById('ano_fabricacao').value,
+            cor: document.getElementById('cor').value,
+            dataAquisicao: document.getElementById('data_aquisicao').value,
+            licenciamento: document.getElementById('licenciamento').value,
+            renavam: document.getElementById('renavam').value,
+            kmInicial: document.getElementById('km_inicial').value,
+            categoriaVeiculo: document.getElementById('categoriaVeiculo').value,
+            tipoCombustivel: document.getElementById('tipoCombustivel').value
+        };
 
-    if (confirmar) {
-        var veiculos = JSON.parse(localStorage.getItem("Veiculos")) || [];
+        if (veiculoFirebaseId) {
+            const itemRef = ref(window.database, `veiculos/${veiculoFirebaseId}`);
 
-        var index = veiculos.findIndex(v => v.id === formId);
+            let placaDuplicated = false;
+            let renavamDuplicated = false;
 
-        if (index !== -1) {
-            veiculos.splice(index, 1);
-            localStorage.setItem("Veiculos", JSON.stringify(veiculos));
+            query(veiculosRef, orderByChild('placa'), equalTo(updatedVeiculo.placa)).once('value')
+                .then(snapshot => {
+                    snapshot.forEach(childSnapshot => {
+                        if (childSnapshot.key !== veiculoFirebaseId) {
+                            placaDuplicated = true;
+                        }
+                    });
+                    return query(veiculosRef, orderByChild('renavam'), equalTo(updatedVeiculo.renavam)).once('value');
+                })
+                .then(snapshot => {
+                    snapshot.forEach(childSnapshot => {
+                        if (childSnapshot.key !== veiculoFirebaseId) {
+                            renavamDuplicated = true;
+                        }
+                    });
 
-            var row = document.getElementById("row-" + formId);
-            if (row) {
-                row.parentNode.removeChild(row);
-            }
+                    if (placaDuplicated) {
+                        alert('Erro: Já existe outro veículo com esta Placa.');
+                        return Promise.reject('Placa duplicada');
+                    }
+                    if (renavamDuplicated) {
+                        alert('Erro: Já existe outro veículo com este RENAVAM.');
+                        return Promise.reject('RENAVAM duplicado');
+                    }
 
-            alert("Cadastro com ID: " + formId + " excluído com sucesso.");
-            window.location.href = "controleVeiculos.html";
+                    return update(itemRef, updatedVeiculo);
+                })
+                .then(() => {
+                    alert('Veículo atualizado com sucesso no Firebase!');
+                    window.location.href = 'controleVeiculos.html';
+                })
+                .catch(error => {
+                    if (error !== 'Placa duplicada' && error !== 'RENAVAM duplicado') {
+                        console.error("Erro ao atualizar veículo no Firebase: ", error);
+                        alert('Erro ao atualizar veículo. Verifique o console.');
+                    }
+                });
+
         } else {
-            alert("Cadastro com ID: " + formId + " não encontrado.");
+            alert("Erro: Este script é para edição. Use a tela de cadastro para novos veículos.");
         }
-    } 
+    });
 });
-
-
-function limparCampos() {
-    document.getElementById('placa').value = '';
-    document.getElementById('marca').value = '';
-    document.getElementById('modelo').value = '';
-    document.getElementById('ano_fabricacao').value = '';
-    document.getElementById('cor').value = '';
-    document.getElementById('data_aquisicao').value = '';
-    document.getElementById('licenciamento').value = '';
-    document.getElementById('renavam').value = '';
-    document.getElementById('km_inicial').value = '';
-    document.getElementById('categoriaVeiculo').value = '';
-    document.getElementById('tipoCombustivel').value = ''; 
-}
-
-
-function salvarFormularioVeiculo() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const veiculoId = urlParams.get('id');
-
-    if (veiculoId) {
-        const veiculosJSON = localStorage.getItem("Veiculos");
-        if (veiculosJSON) {
-            const veiculos = JSON.parse(veiculosJSON);
-            const veiculoIndex = veiculos.findIndex(v => v.id === veiculoId);
-
-            if (veiculoIndex !== -1) {
-                veiculos[veiculoIndex] = {
-                    id: veiculoId, 
-                    placa: document.getElementById("placa").value,
-                    marca: document.getElementById("marca").value,
-                    modelo: document.getElementById("modelo").value,
-                    anoFabricacao: document.getElementById("ano_fabricacao").value,
-                    cor: document.getElementById("cor").value,
-                    dataAquisicao: document.getElementById("data_aquisicao").value,
-                    licenciamento: document.getElementById("licenciamento").value,
-                    renavam: document.getElementById("renavam").value,
-                    kmInicial: document.getElementById("km_inicial").value,
-                    categoriaVeiculo: document.getElementById("categoriaVeiculo").value,
-                    tipoCombustivel: document.getElementById("tipoCombustivel").value,
-                };
-
-                localStorage.setItem("Veiculos", JSON.stringify(veiculos));
-                alert("Veículo atualizado com sucesso!");
-            } 
-        } 
-    } 
-} 
-
-document.getElementById("salvar").addEventListener("click", salvarFormularioVeiculo);
